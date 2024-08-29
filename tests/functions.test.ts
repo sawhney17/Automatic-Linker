@@ -2,7 +2,7 @@ import { replaceContentWithPageLinks } from "../src/functions";
 
 describe("replaceContentWithPageLinks()", () => {
   it("should preserve code blocks", () => {
-    let [content, update] = replaceContentWithPageLinks(
+    let [content, update, pagesFound] = replaceContentWithPageLinks(
       ["page"],
       "page before ```\npage within code block\n```\npage between\n```\nanother page within code block```\nand finally\n```\nwith `single` backticks and page within\n```\npage after",
       false,
@@ -12,10 +12,11 @@ describe("replaceContentWithPageLinks()", () => {
       "[[page]] before ```\npage within code block\n```\n[[page]] between\n```\nanother page within code block```\nand finally\n```\nwith `single` backticks and page within\n```\n[[page]] after"
     );
     expect(update).toBe(true);
+    expect(pagesFound).toStrictEqual(["page"]);
   });
 
   it("should preserve inline code", () => {
-    let [content, update] = replaceContentWithPageLinks(
+    let [content, update, pagesFound] = replaceContentWithPageLinks(
       ["page"],
       "Page before\n`page inside inline code`\npage between\n`another page inline`\n`but not page if inline\nblock is split between newlines`\npage after",
       false,
@@ -25,10 +26,11 @@ describe("replaceContentWithPageLinks()", () => {
       "[[Page]] before\n`page inside inline code`\n[[page]] between\n`another page inline`\n`but not page if inline\nblock is split between newlines`\n[[page]] after"
     );
     expect(update).toBe(true);
+    expect(pagesFound).toStrictEqual(["page"]);
   });
 
   it("should preserve properties", () => {
-    let [content, update] = replaceContentWithPageLinks(
+    let [content, update, pagesFound] = replaceContentWithPageLinks(
       ["page", "price"],
       `Some page here with price
         price:: 123
@@ -42,10 +44,11 @@ describe("replaceContentWithPageLinks()", () => {
         page:: this is a property`
     );
     expect(update).toBe(true);
+    expect(pagesFound).toStrictEqual(["page", "price"]);
   });
 
   it("should preserve Markdown links", () => {
-    let [content, update] = replaceContentWithPageLinks(
+    let [content, update, pagesFound] = replaceContentWithPageLinks(
       ["page", "link", "Logseq"],
       `This page has a link: [page link will not be touched](http://a.com)
       [another page](http://b.com) also with a link
@@ -59,6 +62,7 @@ describe("replaceContentWithPageLinks()", () => {
       [\\[This\\] is a Logseq page](https://logseq.com)`
     );
     expect(update).toBe(true);
+    expect(pagesFound).toStrictEqual(["page", "link"]);
   });
 
   it("should preserve custom query scripts", () => {
@@ -109,7 +113,7 @@ describe("replaceContentWithPageLinks()", () => {
     #+END_QUERY`,
     ];
 
-    const [content, update] = replaceContentWithPageLinks(
+    const [content, update, pagesFound] = replaceContentWithPageLinks(
       ["In Progress", "find", "link"],
       `${customQueries[0]}
       
@@ -128,6 +132,7 @@ describe("replaceContentWithPageLinks()", () => {
       ${customQueries[1]}`
     );
     expect(update).toBe(true);
+    expect(pagesFound).toStrictEqual(["link"]);
   });
 
   it.each([
@@ -166,7 +171,7 @@ describe("replaceContentWithPageLinks()", () => {
       expected: "WAITING A [[Waiting]] [[todo]]",
     },
   ])("should preserve the to do marker for $input", ({ input, expected }) => {
-    let [content, update] = replaceContentWithPageLinks(
+    let [content, update, pagesFound] = replaceContentWithPageLinks(
       [
         "Now",
         "Later",
@@ -190,7 +195,7 @@ describe("replaceContentWithPageLinks()", () => {
   });
 
   it("should output tags when parseAsTags is configured", () => {
-    let [content, update] = replaceContentWithPageLinks(
+    let [content, update, pagesFound] = replaceContentWithPageLinks(
       ["page", "multiple words"],
       "This page has multiple words",
       true,
@@ -198,10 +203,11 @@ describe("replaceContentWithPageLinks()", () => {
     );
     expect(content).toBe("This #page has #[[multiple words]]");
     expect(update).toBe(true);
+    expect(pagesFound).toStrictEqual(["page", "multiple words"]);
   });
 
   it("should output tags when parseSingleWordAsTag is configured", () => {
-    let [content, update] = replaceContentWithPageLinks(
+    let [content, update, pagesFound] = replaceContentWithPageLinks(
       ["one", "multiple words"],
       "This one becomes a tag but multiple words get brackets",
       false,
@@ -211,10 +217,11 @@ describe("replaceContentWithPageLinks()", () => {
       "This #one becomes a tag but [[multiple words]] get brackets"
     );
     expect(update).toBe(true);
+    expect(pagesFound).toStrictEqual(["one", "multiple words"]);
   });
 
   it("should return the same content if nothing was parsed", () => {
-    let [content, update] = replaceContentWithPageLinks(
+    let [content, update, pagesFound] = replaceContentWithPageLinks(
       ["page"],
       "This text doesn't have any links to be parsed",
       false,
@@ -222,10 +229,11 @@ describe("replaceContentWithPageLinks()", () => {
     );
     expect(content).toBe("This text doesn't have any links to be parsed");
     expect(update).toBe(false);
+    expect(pagesFound).toStrictEqual([]);
   });
 
   it("should keep the original input case for lowercase pages", () => {
-    let [content, update] = replaceContentWithPageLinks(
+    let [content, update, pagesFound] = replaceContentWithPageLinks(
       ["when", "for pages", "because", "links", "logseq"],
       `When creating links, the original case that was typed should be preserved
       for PAGES that only have lowercase words.
@@ -239,10 +247,11 @@ describe("replaceContentWithPageLinks()", () => {
       [[Because]] [[logSEQ]] [[LINKS]] are case-insensitive anyway.`
     );
     expect(update).toBe(true);
+    expect(pagesFound).toStrictEqual(["when", "for pages", "because", "links", "logseq"]);
   });
 
   it("should disregard the input case and use the page case for uppercase, title case and mixed case pages", () => {
-    let [content, update] = replaceContentWithPageLinks(
+    let [content, update, pagesFound] = replaceContentWithPageLinks(
       ["John Doe", "Mary Doe", "ANYWAY", "Logseq", "But"],
       `When creating links, the page case should be used when it's not lowercase.
       So things like names are properly capitalised even when typed in lowercase: john doe, mary doe.
@@ -260,10 +269,11 @@ describe("replaceContentWithPageLinks()", () => {
       even if you type them in lowercase`
     );
     expect(update).toBe(true);
+    expect(pagesFound).toStrictEqual(["John Doe", "Mary Doe", "ANYWAY", "Logseq", "But"]);
   });
 
   it("should detect Unicode links", () => {
-    let [content, update] = replaceContentWithPageLinks(
+    let [content, update, pagesFound] = replaceContentWithPageLinks(
       ["가나다"],
       `This block implicitly contains unicode words like 가나다.`,
       false,
@@ -272,5 +282,6 @@ describe("replaceContentWithPageLinks()", () => {
     expect(content).toBe(
       `This block implicitly contains unicode words like [[가나다]].`
     );
+    expect(pagesFound).toStrictEqual(["가나다"]);
   });
 });
