@@ -47,7 +47,7 @@ export function replaceContentWithPageLinks(
   content: string,
   parseAsTags: boolean,
   parseSingleWordAsTag: boolean
-): [string, boolean] {
+): [string, boolean, string[]] {
   // Handle content that should not be automatically linked
   const codeblockReversalTracker = [];
   const inlineCodeReversalTracker = [];
@@ -100,6 +100,7 @@ export function replaceContentWithPageLinks(
   );
 
   let needsUpdate = false;
+  let pagesFound = [];
   allPages.forEach((page) => {
     const regex = new RegExp(
       `(\\w*(?<!\\[{2}[^[\\]]*)\\w*(?<!\\#)\\w*(?<!\\w+:\\/\\/\\S*))(?<=[\\s,.:;"']|^)(${parseForRegex(
@@ -118,6 +119,7 @@ export function replaceContentWithPageLinks(
         parseAsTags ? `#${page}` : `[[${page}]]`
       );
       needsUpdate = true;
+      pagesFound.push(page);
     } else if (page.length > 0) {
       if (content.toUpperCase().includes(page.toUpperCase())) {
         content = content.replaceAll(regex, (match) => {
@@ -133,6 +135,7 @@ export function replaceContentWithPageLinks(
           return `[[${whichCase}]]`;
         });
         needsUpdate = true;
+        pagesFound.push(page);
         // setTimeout(() => { inProcess = false }, 300)
       }
     }
@@ -160,5 +163,5 @@ export function replaceContentWithPageLinks(
     content = content.replace(CUSTOM_QUERY_PLACEHOLDER, value);
   });
 
-  return [content, needsUpdate];
+  return [content, needsUpdate, pagesFound];
 }

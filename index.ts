@@ -92,8 +92,16 @@ const settings: SettingSchemaDesc[] = [
       "a,b,c,card,now,later,todo,doing,done,wait,waiting,canceled,cancelled,started,in-progress",
     title: "Pages to ignore when generating links",
   },
+  {
+    key: "referenceInPages",
+    description: "Add the block parsed to the end of the pages that links were generated for.",
+    type: "boolean",
+    default: false,
+    title: "Append block reference to pages linked",
+  },
 ];
 logseq.useSettingsSchema(settings);
+
 async function getPages() {
   const propertyBasedIgnoreList = await fetchPropertyIgnoreList();
   let pagesToIgnore = logseq.settings?.pagesToIgnore
@@ -133,7 +141,8 @@ async function parseBlockForLink(d: string) {
     });
 
     let needsUpdate = false;
-    [content, needsUpdate] = replaceContentWithPageLinks(
+    let pagesFound = [];
+    [content, needsUpdate, pagesFound] = replaceContentWithPageLinks(
       pageList,
       content,
       logseq.settings?.parseAsTags,
@@ -141,6 +150,21 @@ async function parseBlockForLink(d: string) {
     );
     if (needsUpdate) {
       logseq.Editor.updateBlock(block.uuid, `${content}`);
+
+      if (logseq.settings?.referenceInPages) {
+        for (let page of pagesFound) {
+          const blocksInPage = await logseq.Editor.getPageBlocksTree(page);
+
+          let blockContent = "((" + block.uuid + "))";
+          if (!blocksInPage?.some(b => b.content == blockContent)) {
+            logseq.Editor.insertBlock(
+              page,
+              blockContent,
+              { isPageBlock: true }
+            );
+          }
+        }
+      }
     }
   }
 }
