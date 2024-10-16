@@ -16,6 +16,8 @@ const MARKER_PLACEHOLDERS = {
   WAITING: "d9c67fde-12ae-41e5-9f70-9959c172154b",
 };
 const CUSTOM_QUERY_PLACEHOLDER = "3cf737a1-1a29-4dd1-8db5-45effa23c810";
+const CUSTOM_ORG_PROPERTIES_PLACEHOLDER = "4259dbda-2620-4ee0-9886-59508fb8a1ad";
+
 
 const parseForRegex = (s: string) => {
   //Remove regex special characters from s
@@ -54,6 +56,7 @@ export function replaceContentWithPageLinks(
   const propertyTracker = [];
   const markdownLinkTracker = [];
   const customQueryTracker = [];
+  const customOrgPropertiesTracker = [];
 
   content = content.replaceAll(/```[\s\S]*?```/g, (match) => {
     codeblockReversalTracker.push(match);
@@ -96,6 +99,15 @@ export function replaceContentWithPageLinks(
       customQueryTracker.push(match);
       console.debug({ LogseqAutomaticLinker: "Custom query found", match });
       return CUSTOM_QUERY_PLACEHOLDER;
+    }
+  );
+
+  content = content.replaceAll(
+    /:PROPERTIES:((?!:END:).|\n)*:END:/gim,
+    (match) => {
+      customOrgPropertiesTracker.push(match);
+      console.debug({ LogseqAutomaticLinker: "Custom org properties found", match });
+      return CUSTOM_ORG_PROPERTIES_PLACEHOLDER;
     }
   );
 
@@ -158,6 +170,10 @@ export function replaceContentWithPageLinks(
 
   customQueryTracker?.forEach((value, index) => {
     content = content.replace(CUSTOM_QUERY_PLACEHOLDER, value);
+  });
+
+  customOrgPropertiesTracker?.forEach((value, index) => {
+    content = content.replace(CUSTOM_ORG_PROPERTIES_PLACEHOLDER, value);
   });
 
   return [content, needsUpdate];

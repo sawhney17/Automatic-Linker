@@ -29,17 +29,23 @@ describe("replaceContentWithPageLinks()", () => {
 
   it("should preserve properties", () => {
     let [content, update] = replaceContentWithPageLinks(
-      ["page", "price"],
+      ["page", "price","test","alias"],
       `Some page here with price
         price:: 123
-        page:: this is a property`,
+        page:: this is a property
+        :PROPERTIES:
+        :test: 12312321
+        :END:`,
       false,
       false
     );
     expect(content).toBe(
       `Some [[page]] here with [[price]]
         price:: 123
-        page:: this is a property`
+        page:: this is a property
+        :PROPERTIES:
+        :test: 12312321
+        :END:`
     );
     expect(update).toBe(true);
   });
