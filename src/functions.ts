@@ -16,6 +16,9 @@ const MARKER_PLACEHOLDERS = {
   WAITING: "d9c67fde-12ae-41e5-9f70-9959c172154b",
 };
 const CUSTOM_QUERY_PLACEHOLDER = "3cf737a1-1a29-4dd1-8db5-45effa23c810";
+const CUSTOM_ORG_PROPERTIES_PLACEHOLDER = "4259dbda-2620-4ee0-9886-59508fb8a1ad";
+const CUSTOM_ORG_CODE_BLOCK_PLACEHOLDER = "2e0b35ed-18b1-45d9-8b4f-ed70a0cadd98";
+
 
 const parseForRegex = (s: string) => {
   //Remove regex special characters from s
@@ -54,6 +57,8 @@ export function replaceContentWithPageLinks(
   const propertyTracker = [];
   const markdownLinkTracker = [];
   const customQueryTracker = [];
+  const customOrgPropertiesTracker = [];
+  const customOrgCodeTracker = [];
 
   content = content.replaceAll(/```[\s\S]*?```/g, (match) => {
     codeblockReversalTracker.push(match);
@@ -98,6 +103,23 @@ export function replaceContentWithPageLinks(
       return CUSTOM_QUERY_PLACEHOLDER;
     }
   );
+
+  content = content.replaceAll(
+    /:PROPERTIES:((?!:END:).|\n)*:END:/gim,
+    (match) => {
+      customOrgPropertiesTracker.push(match);
+      console.debug({ LogseqAutomaticLinker: "Custom org properties found", match });
+      return CUSTOM_ORG_PROPERTIES_PLACEHOLDER;
+    }
+  );
+
+  content = content.replaceAll(
+    /#\+BEGIN_SRC((?!#\+END_SRC).|\n)*#\+END_SRC/gim,
+    (match) => {
+      customOrgCodeTracker.push(match);
+      console.debug({ LogseqAutomaticLinker: "Custom org code block found", match });
+    return CUSTOM_ORG_CODE_BLOCK_PLACEHOLDER;
+  });
 
   let needsUpdate = false;
   allPages.forEach((page) => {
@@ -158,6 +180,14 @@ export function replaceContentWithPageLinks(
 
   customQueryTracker?.forEach((value, index) => {
     content = content.replace(CUSTOM_QUERY_PLACEHOLDER, value);
+  });
+
+  customOrgPropertiesTracker?.forEach((value, index) => {
+    content = content.replace(CUSTOM_ORG_PROPERTIES_PLACEHOLDER, value);
+  });
+
+  customOrgCodeTracker?.forEach((value, index) => {
+    content = content.replace(CUSTOM_ORG_CODE_BLOCK_PLACEHOLDER, value);
   });
 
   return [content, needsUpdate];
