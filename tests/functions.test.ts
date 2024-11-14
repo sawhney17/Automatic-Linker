@@ -14,6 +14,19 @@ describe("replaceContentWithPageLinks()", () => {
     expect(update).toBe(true);
   });
 
+  it("should preserve org code blocks", () => {
+    let [content, update] = replaceContentWithPageLinks(
+      ["page"],
+      "page before\n#+BEGIN_SRC\npage within code block\n#+END_SRC\npage between\n#+BEGIN_SRC\nanother page within code block#+END_SRC\nand finally\n#+BEGIN_SRC\nwith backticks and page within\n#+END_SRC\npage after",
+      false,
+      false
+    );
+    expect(content).toBe(
+      "[[page]] before\n#+BEGIN_SRC\npage within code block\n#+END_SRC\n[[page]] between\n#+BEGIN_SRC\nanother page within code block#+END_SRC\nand finally\n#+BEGIN_SRC\nwith backticks and page within\n#+END_SRC\n[[page]] after"
+    );
+    expect(update).toBe(true);
+  });
+
   it("should preserve inline code", () => {
     let [content, update] = replaceContentWithPageLinks(
       ["page"],
